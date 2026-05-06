@@ -70,6 +70,7 @@ const SINGLE_TOKENS = new Set([
   "attr",
   "private_layers",
   "net_tie_pad_groups",
+  "duplicate_pad_numbers_are_jumpers",
   "sheetname",
   "sheetfile",
   "embedded_fonts",

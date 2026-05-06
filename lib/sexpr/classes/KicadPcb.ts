@@ -151,7 +151,54 @@ export class KicadPcb extends SxClass {
       pcb.consumeChild(parsed)
     }
 
+    pcb.assignNameOnlyNetIds()
+
     return pcb
+  }
+
+  private assignNameOnlyNetIds() {
+    const netIdByName = new Map<string, number>()
+    let nextNetId = 1
+
+    for (const net of this._nets) {
+      netIdByName.set(net.name, net.id)
+      nextNetId = Math.max(nextNetId, net.id + 1)
+    }
+
+    const assignNetId = (net: { id: number; name?: string }) => {
+      if (net.id !== 0 || !net.name) return
+      let netId = netIdByName.get(net.name)
+      if (netId === undefined) {
+        netId = nextNetId
+        nextNetId += 1
+        netIdByName.set(net.name, netId)
+        this._nets.push(new PcbNet(netId, net.name))
+      }
+      net.id = netId
+    }
+
+    for (const footprint of this._footprints) {
+      for (const pad of footprint.fpPads) {
+        if (pad.net) assignNetId(pad.net)
+      }
+    }
+    for (const segment of this._segments) {
+      if (segment.net) assignNetId(segment.net)
+    }
+    for (const via of this._vias) {
+      if (via.net) assignNetId(via.net)
+    }
+    for (const arc of this._arcs) {
+      if (arc.net !== 0 || !arc.netName) continue
+      let netId = netIdByName.get(arc.netName)
+      if (netId === undefined) {
+        netId = nextNetId
+        nextNetId += 1
+        netIdByName.set(arc.netName, netId)
+        this._nets.push(new PcbNet(netId, arc.netName))
+      }
+      arc.net = netId
+    }
   }
 
   private consumeChild(child: SxClass) {

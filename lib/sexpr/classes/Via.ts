@@ -29,6 +29,10 @@ export interface ViaConstructorParams {
   net?: ViaNet
   uuid?: Uuid | string
   tstamp?: Tstamp | string
+  capping?: string
+  covering?: string[]
+  plugging?: string[]
+  filling?: string
   teardrops?: PadTeardrops
 }
 
@@ -48,6 +52,10 @@ export class Via extends SxClass {
   private _sxNet?: ViaNet
   private _sxUuid?: Uuid
   private _sxTstamp?: Tstamp
+  private _capping?: string
+  private _covering: string[] = []
+  private _plugging: string[] = []
+  private _filling?: string
   private _sxTeardrops?: PadTeardrops
 
   constructor(params: ViaConstructorParams = {}) {
@@ -66,6 +74,10 @@ export class Via extends SxClass {
     if (params.net !== undefined) this.net = params.net
     if (params.uuid !== undefined) this.uuid = params.uuid
     if (params.tstamp !== undefined) this.tstamp = params.tstamp
+    if (params.capping !== undefined) this.capping = params.capping
+    if (params.covering !== undefined) this.covering = params.covering
+    if (params.plugging !== undefined) this.plugging = params.plugging
+    if (params.filling !== undefined) this.filling = params.filling
     if (params.teardrops !== undefined) this.teardrops = params.teardrops
   }
 
@@ -179,6 +191,28 @@ export class Via extends SxClass {
       }
       case "teardrops": {
         this._sxTeardrops = PadTeardrops.fromSexprPrimitives(args)
+        return
+      }
+      case "capping": {
+        const value = toStringValue(args[0])
+        if (value === undefined) {
+          throw new Error("via capping expects a string value")
+        }
+        this._capping = value
+        return
+      }
+      case "covering":
+        this._covering = getEnabledSides(args)
+        return
+      case "plugging":
+        this._plugging = getEnabledSides(args)
+        return
+      case "filling": {
+        const value = toStringValue(args[0])
+        if (value === undefined) {
+          throw new Error("via filling expects a string value")
+        }
+        this._filling = value
         return
       }
       case "uuid": {
@@ -327,6 +361,38 @@ export class Via extends SxClass {
     this._sxTstamp = value instanceof Tstamp ? value : new Tstamp(value)
   }
 
+  get capping(): string | undefined {
+    return this._capping
+  }
+
+  set capping(value: string | undefined) {
+    this._capping = value
+  }
+
+  get covering(): string[] {
+    return [...this._covering]
+  }
+
+  set covering(sides: string[]) {
+    this._covering = sides.map((side) => String(side))
+  }
+
+  get plugging(): string[] {
+    return [...this._plugging]
+  }
+
+  set plugging(sides: string[]) {
+    this._plugging = sides.map((side) => String(side))
+  }
+
+  get filling(): string | undefined {
+    return this._filling
+  }
+
+  set filling(value: string | undefined) {
+    this._filling = value
+  }
+
   override getChildren(): SxClass[] {
     const children: SxClass[] = []
     if (this._sxAt) children.push(this._sxAt)
@@ -355,6 +421,14 @@ export class Via extends SxClass {
     if (this._sxNet) lines.push(this._sxNet.getStringIndented())
     if (this._sxUuid) lines.push(this._sxUuid.getStringIndented())
     if (this._sxTstamp) lines.push(this._sxTstamp.getStringIndented())
+    if (this._capping !== undefined) lines.push(`  (capping ${this._capping})`)
+    if (this._covering.length > 0) {
+      lines.push(`  (covering ${this._covering.join(" ")})`)
+    }
+    if (this._plugging.length > 0) {
+      lines.push(`  (plugging ${this._plugging.join(" ")})`)
+    }
+    if (this._filling !== undefined) lines.push(`  (filling ${this._filling})`)
     if (this._sxTeardrops) {
       lines.push(this._sxTeardrops.getStringIndented())
     }
@@ -364,3 +438,22 @@ export class Via extends SxClass {
   }
 }
 SxClass.register(Via)
+
+function getEnabledSides(primitiveSexprs: PrimitiveSExpr[]): string[] {
+  const sides: string[] = []
+  for (const primitive of primitiveSexprs) {
+    const side = toStringValue(primitive)
+    if (side !== undefined) {
+      sides.push(side)
+      continue
+    }
+    if (!Array.isArray(primitive)) continue
+    const [sidePrimitive, enabledPrimitive] = primitive
+    if (toStringValue(enabledPrimitive) !== "yes") continue
+    const nestedSide = toStringValue(sidePrimitive)
+    if (nestedSide !== undefined) {
+      sides.push(nestedSide)
+    }
+  }
+  return sides
+}

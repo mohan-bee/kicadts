@@ -11,6 +11,10 @@ import {
 } from "./setupMultiValueProperties"
 import {
   SetupAllowSoldermaskBridgesInFootprints,
+  SetupCapping,
+  SetupCovering,
+  SetupFilling,
+  SetupPlugging,
   SetupTenting,
   SetupUviasAllowed,
   SetupVisibleElements,
@@ -73,6 +77,10 @@ export interface SetupPropertyValues {
   padDrill?: SetupPadDrill
   allowSoldermaskBridgesInFootprints?: SetupAllowSoldermaskBridgesInFootprints
   tenting?: SetupTenting
+  covering?: SetupCovering
+  plugging?: SetupPlugging
+  capping?: SetupCapping
+  filling?: SetupFilling
   auxAxisOrigin?: SetupAuxAxisOrigin
   gridOrigin?: SetupGridOrigin
   visibleElements?: SetupVisibleElements
@@ -112,6 +120,10 @@ export type SetupProperty =
   | SetupPadDrill
   | SetupAllowSoldermaskBridgesInFootprints
   | SetupTenting
+  | SetupCovering
+  | SetupPlugging
+  | SetupCapping
+  | SetupFilling
   | SetupAuxAxisOrigin
   | SetupGridOrigin
   | SetupVisibleElements

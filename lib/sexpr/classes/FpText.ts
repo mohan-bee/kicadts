@@ -19,6 +19,7 @@ const SUPPORTED_SINGLE_TOKENS = new Set([
   "tstamp",
   "uuid",
   "unlocked",
+  "locked",
   "hide",
 ])
 
@@ -29,6 +30,7 @@ export interface FpTextConstructorParams {
   text?: string
   position?: AtInput | Xy
   unlocked?: boolean
+  locked?: boolean
   hidden?: boolean
   layer?: Layer | string | string[]
   effects?: TextEffects
@@ -44,6 +46,7 @@ export class FpText extends SxClass {
   private _text = ""
   private _sxPosition?: At | Xy
   private _sxUnlocked?: FpTextUnlocked
+  private _sxLocked?: FpTextLocked
   private _sxHide?: FpTextHide
   private _sxLayer?: Layer
   private _sxEffects?: TextEffects
@@ -56,6 +59,7 @@ export class FpText extends SxClass {
     if (params.text !== undefined) this.text = params.text
     if (params.position !== undefined) this.position = params.position
     if (params.unlocked !== undefined) this.unlocked = params.unlocked
+    if (params.locked !== undefined) this.locked = params.locked
     if (params.hidden !== undefined) this.hidden = params.hidden
     if (params.layer !== undefined) this.layer = params.layer
     if (params.effects !== undefined) this.effects = params.effects
@@ -84,6 +88,7 @@ export class FpText extends SxClass {
 
     const structuredPrimitives: PrimitiveSExpr[] = []
     let sawBareUnlocked = false
+    let sawBareLocked = false
     let sawBareHide = false
 
     for (const primitive of rest) {
@@ -95,6 +100,13 @@ export class FpText extends SxClass {
             )
           }
           sawBareUnlocked = true
+          continue
+        }
+        if (primitive === "locked") {
+          if (sawBareLocked) {
+            throw new Error("fp_text encountered duplicate bare locked tokens")
+          }
+          sawBareLocked = true
           continue
         }
         if (primitive === "hide") {
@@ -153,11 +165,17 @@ export class FpText extends SxClass {
     fpText._sxUuid = propertyMap.uuid as Uuid | undefined
 
     const unlockedEntry = propertyMap.unlocked as FpTextUnlocked | undefined
+    const lockedEntry = propertyMap.locked as FpTextLocked | undefined
     const hideEntry = propertyMap.hide as FpTextHide | undefined
 
     if (unlockedEntry && sawBareUnlocked) {
       throw new Error(
         "fp_text encountered both bare and structured unlocked tokens",
+      )
+    }
+    if (lockedEntry && sawBareLocked) {
+      throw new Error(
+        "fp_text encountered both bare and structured locked tokens",
       )
     }
     if (hideEntry && sawBareHide) {
@@ -167,10 +185,14 @@ export class FpText extends SxClass {
     }
 
     fpText._sxUnlocked = unlockedEntry
+    fpText._sxLocked = lockedEntry
     fpText._sxHide = hideEntry
 
     if (sawBareUnlocked) {
       fpText._sxUnlocked = new FpTextUnlocked({ value: true, bare: true })
+    }
+    if (sawBareLocked) {
+      fpText._sxLocked = new FpTextLocked({ locked: true, bare: true })
     }
     if (sawBareHide) {
       fpText._sxHide = new FpTextHide({ value: true, bare: true })
@@ -219,6 +241,16 @@ export class FpText extends SxClass {
   set unlocked(value: boolean) {
     this._sxUnlocked = value
       ? new FpTextUnlocked({ value: true, bare: true })
+      : undefined
+  }
+
+  get locked(): boolean {
+    return this._sxLocked?.locked ?? false
+  }
+
+  set locked(value: boolean) {
+    this._sxLocked = value
+      ? new FpTextLocked({ locked: true, bare: true })
       : undefined
   }
 
@@ -285,6 +317,7 @@ export class FpText extends SxClass {
     const children: SxClass[] = []
     if (this._sxPosition) children.push(this._sxPosition)
     if (this._sxUnlocked) children.push(this._sxUnlocked)
+    if (this._sxLocked) children.push(this._sxLocked)
     if (this._sxLayer) children.push(this._sxLayer)
     if (this._sxHide) children.push(this._sxHide)
     if (this._sxEffects) children.push(this._sxEffects)
@@ -355,6 +388,43 @@ class FpTextUnlocked extends SxClass {
   }
 }
 SxClass.register(FpTextUnlocked)
+
+class FpTextLocked extends SxClass {
+  static override token = "locked"
+  static override parentToken = "fp_text"
+  token = "locked"
+
+  locked: boolean
+  private readonly renderBare: boolean
+
+  constructor(options: { locked?: boolean; bare?: boolean } = {}) {
+    super()
+    this.locked = options.locked ?? true
+    this.renderBare = options.bare ?? false
+  }
+
+  static override fromSexprPrimitives(
+    primitiveSexprs: PrimitiveSExpr[],
+  ): FpTextLocked {
+    const [raw] = primitiveSexprs
+    const rawString = toStringValue(raw)
+    const locked =
+      rawString === undefined ? true : !/^(no|false)$/iu.test(rawString)
+    return new FpTextLocked({ locked, bare: false })
+  }
+
+  override getChildren(): SxClass[] {
+    return []
+  }
+
+  override getString(): string {
+    if (this.renderBare) {
+      return "locked"
+    }
+    return `(locked ${this.locked ? "yes" : "no"})`
+  }
+}
+SxClass.register(FpTextLocked)
 
 class FpTextHide extends SxClass {
   static override token = "hide"

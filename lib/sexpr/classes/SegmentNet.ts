@@ -23,6 +23,12 @@ export class SegmentNet extends SxClass {
   ): SegmentNet {
     const [rawId, rawName] = primitiveSexprs
     const id = toNumberValue(rawId)
+    if (id === undefined && rawName === undefined) {
+      const name = toStringValue(rawId)
+      if (name !== undefined) {
+        return new SegmentNet(0, name)
+      }
+    }
     if (id === undefined) {
       throw new Error("net expects a numeric identifier")
     }

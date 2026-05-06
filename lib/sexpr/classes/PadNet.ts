@@ -21,8 +21,15 @@ export class PadNet extends SxClass {
   static override fromSexprPrimitives(
     primitiveSexprs: PrimitiveSExpr[],
   ): PadNet {
-    const id = toNumberValue(primitiveSexprs[0])
-    const name = toStringValue(primitiveSexprs[1])
+    const [rawId, rawName] = primitiveSexprs
+    const id = toNumberValue(rawId)
+    if (id === undefined && rawName === undefined) {
+      const name = toStringValue(rawId)
+      if (name !== undefined) {
+        return new PadNet(0, name)
+      }
+    }
+    const name = toStringValue(rawName)
     if (id === undefined || name === undefined) {
       throw new Error("pad net requires numeric id and string name")
     }

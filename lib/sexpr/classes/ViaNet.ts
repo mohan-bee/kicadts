@@ -21,12 +21,18 @@ export class ViaNet extends SxClass {
   static override fromSexprPrimitives(
     primitiveSexprs: PrimitiveSExpr[],
   ): ViaNet {
-    const id = toNumberValue(primitiveSexprs[0])
+    const [rawId, rawName] = primitiveSexprs
+    const id = toNumberValue(rawId)
+    if (id === undefined && rawName === undefined) {
+      const name = toStringValue(rawId)
+      if (name !== undefined) {
+        return new ViaNet(0, name)
+      }
+    }
     if (id === undefined) {
       throw new Error("via net requires a numeric id")
     }
-    const name =
-      primitiveSexprs.length > 1 ? toStringValue(primitiveSexprs[1]) : undefined
+    const name = rawName === undefined ? undefined : toStringValue(rawName)
     return new ViaNet(id, name)
   }
 

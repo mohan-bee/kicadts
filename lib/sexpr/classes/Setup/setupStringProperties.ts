@@ -37,7 +37,7 @@ export class SetupTenting extends SxClass {
   static override parentToken = "setup"
   token = "tenting"
 
-  private _sides: string[] = []
+  protected _sides: string[] = []
 
   constructor(sides: string[] = []) {
     super()
@@ -47,10 +47,7 @@ export class SetupTenting extends SxClass {
   static override fromSexprPrimitives(
     primitiveSexprs: PrimitiveSExpr[],
   ): SetupTenting {
-    const sides = primitiveSexprs
-      .map((primitive) => toStringValue(primitive))
-      .filter((value): value is string => value !== undefined)
-    return new SetupTenting(sides)
+    return new SetupTenting(getSetupSides(primitiveSexprs))
   }
 
   get sides(): string[] {
@@ -67,9 +64,64 @@ export class SetupTenting extends SxClass {
 
   override getString(): string {
     if (this._sides.length === 0) {
-      return "(tenting)"
+      return `(${this.token})`
     }
-    return `(tenting ${this._sides.join(" ")})`
+    return `(${this.token} ${this._sides.join(" ")})`
   }
 }
 SxClass.register(SetupTenting)
+
+export class SetupCovering extends SetupTenting {
+  static override token = "covering"
+  override token = "covering"
+
+  static override fromSexprPrimitives(
+    primitiveSexprs: PrimitiveSExpr[],
+  ): SetupCovering {
+    return new SetupCovering(getSetupSides(primitiveSexprs))
+  }
+}
+SxClass.register(SetupCovering)
+
+export class SetupPlugging extends SetupTenting {
+  static override token = "plugging"
+  override token = "plugging"
+
+  static override fromSexprPrimitives(
+    primitiveSexprs: PrimitiveSExpr[],
+  ): SetupPlugging {
+    return new SetupPlugging(getSetupSides(primitiveSexprs))
+  }
+}
+SxClass.register(SetupPlugging)
+
+export class SetupCapping extends SetupStringProperty {
+  static override token = "capping"
+  token = "capping"
+}
+SxClass.register(SetupCapping)
+
+export class SetupFilling extends SetupStringProperty {
+  static override token = "filling"
+  token = "filling"
+}
+SxClass.register(SetupFilling)
+
+function getSetupSides(primitiveSexprs: PrimitiveSExpr[]): string[] {
+  const sides: string[] = []
+  for (const primitive of primitiveSexprs) {
+    const side = toStringValue(primitive)
+    if (side !== undefined) {
+      sides.push(side)
+      continue
+    }
+    if (!Array.isArray(primitive)) continue
+    const [sidePrimitive, enabledPrimitive] = primitive
+    if (toStringValue(enabledPrimitive) !== "yes") continue
+    const nestedSide = toStringValue(sidePrimitive)
+    if (nestedSide !== undefined) {
+      sides.push(nestedSide)
+    }
+  }
+  return sides
+}

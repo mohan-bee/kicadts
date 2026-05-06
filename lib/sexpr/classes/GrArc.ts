@@ -1,4 +1,5 @@
 import { SxClass } from "../base-classes/SxClass"
+import { SxPrimitiveBoolean } from "../base-classes/SxPrimitiveBoolean"
 import type { PrimitiveSExpr } from "../parseToPrimitiveSExpr"
 import { Layer } from "./Layer"
 import { Stroke } from "./Stroke"
@@ -18,6 +19,7 @@ const SUPPORTED_SINGLE_TOKENS = new Set([
   "layer",
   "width",
   "stroke",
+  "locked",
   "tstamp",
   "uuid",
 ])
@@ -29,6 +31,7 @@ export interface GrArcConstructorParams {
   layer?: Layer | string | Array<string | number>
   width?: Width | number
   stroke?: Stroke
+  locked?: boolean
   tstamp?: Tstamp | string
   uuid?: Uuid | string
 }
@@ -43,6 +46,7 @@ export class GrArc extends SxClass {
   private _sxLayer?: Layer
   private _sxWidth?: Width
   private _sxStroke?: Stroke
+  private _sxLocked?: GrArcLocked
   private _sxTstamp?: Tstamp
   private _sxUuid?: Uuid
 
@@ -54,6 +58,7 @@ export class GrArc extends SxClass {
     if (params.layer !== undefined) this.layer = params.layer
     if (params.width !== undefined) this.width = params.width
     if (params.stroke !== undefined) this.stroke = params.stroke
+    if (params.locked !== undefined) this.locked = params.locked
     if (params.tstamp !== undefined) this.tstamp = params.tstamp
     if (params.uuid !== undefined) this.uuid = params.uuid
   }
@@ -103,6 +108,7 @@ export class GrArc extends SxClass {
     grArc._sxLayer = propertyMap.layer as Layer | undefined
     grArc._sxWidth = propertyMap.width as Width | undefined
     grArc._sxStroke = propertyMap.stroke as Stroke | undefined
+    grArc._sxLocked = propertyMap.locked as GrArcLocked | undefined
     grArc._sxTstamp = propertyMap.tstamp as Tstamp | undefined
     grArc._sxUuid = propertyMap.uuid as Uuid | undefined
 
@@ -203,6 +209,14 @@ export class GrArc extends SxClass {
     this._sxStroke = value
   }
 
+  get locked(): boolean {
+    return this._sxLocked?.value ?? false
+  }
+
+  set locked(value: boolean) {
+    this._sxLocked = value ? new GrArcLocked(true) : undefined
+  }
+
   get tstamp(): Tstamp | undefined {
     return this._sxTstamp
   }
@@ -234,6 +248,7 @@ export class GrArc extends SxClass {
     if (this._sxEnd) children.push(this._sxEnd)
     if (this._sxStroke) children.push(this._sxStroke)
     if (this._sxWidth) children.push(this._sxWidth)
+    if (this._sxLocked) children.push(this._sxLocked)
     if (this._sxLayer) children.push(this._sxLayer)
     if (this._sxTstamp) children.push(this._sxTstamp)
     if (this._sxUuid) children.push(this._sxUuid)
@@ -277,6 +292,37 @@ export class GrArc extends SxClass {
   }
 }
 SxClass.register(GrArc)
+
+export class GrArcLocked extends SxPrimitiveBoolean {
+  static override token = "locked"
+  static override parentToken = "gr_arc"
+  override token = "locked"
+
+  constructor(value: boolean) {
+    super(value)
+  }
+
+  static override fromSexprPrimitives(
+    primitiveSexprs: PrimitiveSExpr[],
+  ): GrArcLocked {
+    const [rawValue] = primitiveSexprs
+    if (rawValue === undefined) {
+      return new GrArcLocked(true)
+    }
+    if (typeof rawValue === "boolean") {
+      return new GrArcLocked(rawValue)
+    }
+    if (typeof rawValue === "string") {
+      return new GrArcLocked(/^(yes|true|1)$/iu.test(rawValue))
+    }
+    return new GrArcLocked(false)
+  }
+
+  override getString(): string {
+    return `(locked ${this.value ? "yes" : "no"})`
+  }
+}
+SxClass.register(GrArcLocked)
 
 export class GrArcStart extends SxClass {
   static override token = "start"

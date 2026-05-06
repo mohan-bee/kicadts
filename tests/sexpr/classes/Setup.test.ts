@@ -48,6 +48,16 @@ test("Setup", () => {
   (pad_drill 0)
   (allow_soldermask_bridges_in_footprints no)
   (tenting front back)
+  (covering
+    (front no)
+    (back yes)
+  )
+  (plugging
+    (front yes)
+    (back no)
+  )
+  (capping no)
+  (filling no)
   (aux_axis_origin 10 15)
   (grid_origin 20 25)
   (visible_elements 7FFFFFFF)
@@ -98,6 +108,10 @@ test("Setup", () => {
   expect(parsedSetup).toBeInstanceOf(Setup)
   const setup = parsedSetup as Setup
   expect(setup.pcbPlotParams?.plotfptext).toBe("yes")
+  expect(setup.covering).toEqual(["back"])
+  expect(setup.plugging).toEqual(["front"])
+  expect(setup.capping).toBe("no")
+  expect(setup.filling).toBe("no")
   expect(setup!.getString()).toMatchInlineSnapshot(`
     "(setup
       (stackup
@@ -143,6 +157,10 @@ test("Setup", () => {
       (pad_drill 0)
       (allow_soldermask_bridges_in_footprints no)
       (tenting front back)
+      (covering back)
+      (plugging front)
+      (capping no)
+      (filling no)
       (aux_axis_origin 10 15)
       (grid_origin 20 25)
       (visible_elements 7FFFFFFF)

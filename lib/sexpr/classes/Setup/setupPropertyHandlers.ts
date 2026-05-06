@@ -12,6 +12,10 @@ import {
 } from "./setupMultiValueProperties"
 import {
   SetupAllowSoldermaskBridgesInFootprints,
+  SetupCapping,
+  SetupCovering,
+  SetupFilling,
+  SetupPlugging,
   SetupTenting,
   SetupUviasAllowed,
   SetupVisibleElements,
@@ -79,6 +83,10 @@ export const setupPropertyDescriptors = [
     key: "allowSoldermaskBridgesInFootprints",
   },
   { Class: SetupTenting, key: "tenting" },
+  { Class: SetupCovering, key: "covering" },
+  { Class: SetupPlugging, key: "plugging" },
+  { Class: SetupCapping, key: "capping" },
+  { Class: SetupFilling, key: "filling" },
   { Class: SetupAuxAxisOrigin, key: "auxAxisOrigin" },
   { Class: SetupGridOrigin, key: "gridOrigin" },
   { Class: SetupVisibleElements, key: "visibleElements" },
